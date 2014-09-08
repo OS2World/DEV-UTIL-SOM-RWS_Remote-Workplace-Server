@@ -1,0 +1,248 @@
+_______________________________________________________________________________
+
+== oo -- a WPS commandline tool ==
+_______________________________________________________________________________
+
+  Version 1.10 released July 3, 2007
+
+  (C)Copyright 2007  R.L.Walsh - all rights reserved
+
+  An open-source project licensed under the Mozilla Public License
+
+  Please send your comments & questions to:  Rich Walsh <rws@e-vertise.com>
+
+_______________________________________________________________________________
+
+ - About oo -
+_______________________________________________________________________________
+
+  oo is a text-mode utility for working with the WPS.  You can use it
+  at the commandline or in scripts to:  open, locate, and list objects,
+  get info about them, assign setup strings to them, and more.
+
+  With v1.1, oo can perform all of the WPS tasks that used to require
+  REXX.  Use oo in scripts or at the commandline instead of REXX calls
+  like SysCopyObject or SysCreateShadow.  oo's alternatives are more
+  powerful because they work with any object, not just files or folders.
+
+_______________________________________________________________________________
+
+ - New & Changed in v1.1 -
+_______________________________________________________________________________
+
+  v1.1 adds new commands, renames two existing commands, and changes
+  some options and defaults to provide greater consistency.
+
+  New Commands
+  ------------
+  These provide more powerful equivalents to REXX function calls that work
+  with WPS objects.  They take the same parameters as the REXX functions:
+    Copy            /C      SysCopyObject
+    Create Shadow   /W      SysCreateShadow
+    Delete          /D      SysDestroyObject
+    Move            /M      SysMoveObject
+    New             /N      SysCreateObject
+
+  These provide better performance in scripts that call oo several times.
+    Lock            /+      Lock RWS08 in memory
+    Unlock          /-      Unlock RWS08
+
+  Changed Commands
+  ----------------
+    Goto            /G      was 'Show' (/S)
+    Popupmenu       /P      was 'Menu' (/M)
+
+  Changed Options
+  ---------------
+  Previously, if you used a shadow object as a parameter, some commands
+  would automatically locate the original and use that object instead.
+  To provide greater consistency, almost all commands now use whatever
+  object you supply.  A new option lets you change this behavior:
+    Original        /...o   if the supplied object is a Shadow, locate
+                            the Original and use that instead
+  Note:  if the object is already an original, this option has no effect
+
+  Bug Fixed
+  ---------
+  When using the Assign (/A) command, the new setup string might not be
+  saved.  oo now explicitly saves the object's state.
+
+_______________________________________________________________________________
+
+ - Setup -
+_______________________________________________________________________________
+
+  You can put oo.exe, rwscli08.dll, and rwssrv08.dll in any directory.
+  However, for maximum flexibility at the commandline and in scripts,
+  put the exe in a directory on your PATH, and the dlls in a directory
+  on your LIBPATH.  Put rws08.cmd in the same directory as the dlls in
+  case you ever need to register or deregister the class.
+
+  If you installed oo v1.0, please be sure to replace the older versions
+  of the RWS08 dlls with the files from this distro (or later).  oo v1.1
+  will not work with the older dlls.
+
+_______________________________________________________________________________
+
+ - Basic Features -
+_______________________________________________________________________________
+
+  If you run oo without any parameters, it will display a basic help
+  screen that describes most (but not all) features.  Here it is:
+
+  Open       oo  [/O]    object [view]    open object in selected view
+  GoTo       oo  /G[o]   object           go to object & highlight it
+  PopupMenu  oo  /P[o]   object           popup object's WPS menu
+  Info       oo  /I[oh]  object           info about an object
+  List       oo  /L[h]   folder           list non-file objects in folder
+  Assign     oo  /A[s]   object string    assign setup string
+  OpenUsing  oo  /U      file program     open file using program object
+  Delete     oo  /D[o]   object [Force]   delete object ('f' to force)
+  Copy       oo  /C[o]   object folder    copy object to folder
+  Move       oo  /M[o]   object folder    move object to folder
+  Shadow     oo  /W      object folder    put shadow of object in folder
+  New        oo  /N      class [title folder setup option]  new object
+  options - [o] if a shadow, use the original  - [h] show handles only
+  
+  object  - the full path & name of any WPS object, file, or directory
+          - the name of any file or directory found on the PATH or OOPATH
+          - a WPS object ID   - a WPS object's handle (in decimal or hex)
+  Use SET OOPATH= to add other directories to the search path
+  
+  view    - [I]con, [T]ree, [D]etails (folders)  - [S]ettings (any object)
+          - [R]unning (programs & data files)
+
+_______________________________________________________________________________
+
+ - Additional Options & Info -
+_______________________________________________________________________________
+
+  oo offers addtional options not described above.  Here they are,
+  along with some info that you may find helpful.
+
+  Commands
+  --------
+  - Using these extra commands in scripts that call oo several times
+    will improve its performance.  They will prevent the RWS08 class
+    from being loaded & unloaded each time oo is called.
+
+    Lock      oo /+         lock RWS08 in memory
+    Unlock    oo /-         unlock RWS08
+
+    Lock creates an RWS08 object in the same directory as oo.exe and
+    sends its WPS handle to stdout. Unlock deletes this object.  When
+    the last object is destroyed, the RWS08 class will be unloaded
+    (if no other app is using it).  You can delete these objects
+    manually at any time - they will be destroyed automatically when
+    the WPS restarts.
+
+  - The 'New' command is similar to SysCreateObject except that
+    it's more flexible:
+
+    New       oo /N class [title [folder [setup [option]]]]
+
+    Only the class name is required.  If you leave out the other
+    parameters, an object will be created on the Desktop that has
+    the same name as the class.  The WPS handle of the newly
+    created object will be sent to the console via stdout.
+
+  Switches
+  --------
+  Switches can start with either a '/' or a '-', and are not
+  case-sensitive.
+
+  - 'Original' option (used with most commands):
+    If you give oo a shadow, it will find the original object and
+    work with that.  For example, 'oo /go shadow' will open the
+    folder containing the original, not the shadow.  If the object
+    you supply is not a shadow, this option will have no effect.
+
+    Note:  the Assign command always uses the original object.
+    To assign a setup string to a shadow, use the 's' option.
+
+  - 'Handles only' option (used with Info & List commands):
+    These commands normally display an object's handle, object ID,
+    WPS class, and title.  To have them show only the handle(s), add
+    an 'h' to the switch.  For example: 'oo /lh folder'.  This might
+    be useful in a script which parses the output and performs an
+    action on each handle.
+
+  View
+  ----
+  In addition to the views listed above, you can also use:
+  - X or Textview (Object Desktop's TextView)
+  - U or User (3rd-party WPS classes often use this or User+1) 
+  - U1 or User+1
+
+  Search Paths
+  ------------
+  If you supply an unqualified file or directory name (i.e. name only,
+  no path), oo will search for it using the PATH environment variable.
+  In many cases, it won't be found.  To improve search results, you
+  can use one of these options:
+
+  - OOPATH:  in config.sys or at the commandline, enter 'SET OOPATH=',
+    then add directories oo should search _before_ using PATH.  Some
+    examples are:  the root directories of your drives, your download
+    directory, os2\dll, mptn\etc, your Mozilla profile directory, etc.
+
+  - Specify a path:  if you know a file or directory won't be found
+    on the PATH or OOPATH, you can specify the path to search. Enter
+    either '%variable%;filename' or 'c:\dir1;f:\dir2\dir3;filename'.
+    'variable' is the name of an exisiting search path, e.g. 'HELP'.
+    Be sure to separate the path from the name with a semicolon (':').
+    Note: if you supply a search path, oo will not use PATH or OOPATH.
+
+  Default Command
+  ---------------
+  To change oo's default command, rename the exe.  Change the 2nd
+  letter of the name to match the switch you want as the default.
+  For example:  when renamed 'og', Goto is the default;  for 'op',
+  Popupmenu is the default.  Confirm the renamed program recognizes
+  the change by running it without any parameters:  the help screen
+  should show the new name and new default.
+  Note:  after renaming, you must use the '/o' switch to open objects.
+
+  Output & Return Codes
+  ---------------------
+  Output from the Info, List, New, & Lock commands, as well as the
+  Help screen are sent to stdout.  Error messages are sent to stderr.
+
+  oo uses these return codes which may be useful in a script:
+  -  0  command was successful
+  -  2  help screen was displayed
+  -  4  invalid or missing parameter
+  -  8  command failed in RWS08
+  - 16  RWS08 couldn't be initialized or requires a newer version
+
+  rws08.cmd
+  ---------
+  This REXX script registers & deregisters the RWS08 class.  Few users
+  have any reason to run it.  The first time you use oo, it will take
+  a few seconds to register the class for you.  Thereafter, the class
+  will only be in memory while oo is running (usually for less than a
+  second).  Don't deregister the class unless you don't expect to use
+  oo again - doing so will only slow oo down the next time you run it.
+
+_______________________________________________________________________________
+
+ - File List -
+_______________________________________________________________________________
+
+  All files are timestamped July 3, 2007 at 01:10:00.
+
+  1.  oo.Exe
+  2.  oo.Txt
+  3.  RwsSrv08.Dll
+  4.  RwsCli08.Dll
+  5.  Rws08.Cmd
+  6.  LICENSE
+
+_______________________________________________________________________________
+
+  Rich Walsh <rws@e-vertise.com>
+  Ft Myers, FL
+
+  July 3, 2007
+_______________________________________________________________________________
+

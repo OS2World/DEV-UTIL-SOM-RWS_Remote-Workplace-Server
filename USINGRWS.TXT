@@ -1,0 +1,1328 @@
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+== REMOTE WORKPLACE SERVER ==
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+   Beta version 0.80 released July 3, 2007
+
+   (C)Copyright 2004-2007  R.L.Walsh - all rights reserved
+
+   An open-source project licensed under the Mozilla Public License
+
+   Please send your comments & questions to:  Rich Walsh <rws@e-vertise.com>
+
+_______________________________________________________________________________
+
+== Contents of UsingRws.Txt ==
+_______________________________________________________________________________
+
+
+ * INTRODUCTION
+    - About RWS
+|   - Changes in v0.80
+
+ * USING RWS
+|   - Overview
+    - Calling RWS
+       Type RWSP_*
+    - Getting the Results
+    - Cleanup
+    - RWS Types
+       Type RWSI_*
+       Type RWSO_*
+       Type RWSR_*
+       Types for Object Conversion
+    - RwsConvert
+       Type RWSC_*
+
+ * API
+|   - Functions
+    - RwsBuild / RwsCall Arguments
+|   - RWS Commands
+    - RWS Macros
+    - Server Request Block
+
+ * FILE LIST
+
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+== INTRODUCTION ==
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+  This document is for programmers who wish to use Remote Workplace Server
+  (RWS) to access the WPS.  To take full advantage of RWS, you should be
+  familiar with the basics of writing code for the WPS.  However, some
+  aspects of RWS are generic enough - in particular, RwsConvert, the object
+  conversion feature - that almost all programmers should be able to use it
+  in their applications.
+
+  For examples of how RWS is used in a working program, please look at
+  the source code for the RWS demo program "Iconomize".  It uses most
+  RWS functions and its comments explain every aspect of its operation.
+  If you'd like to experiment with RWS, you can try "RwsTest" which lets
+  you call almost any procedure that uses six or fewer arguments.
+
+  Currently, there is no formal documentation for RWS's components, RwsClient
+  and RwsServer.  However, the information provided here along with the
+  extensive comments in their source code should leave few questions about
+  how they work.  And of course, in all cases you should review the primary
+  header, rws.h, and the header containing RWS's error codes, rwserr.h.
+
+_______________________________________________________________________________
+
+ - About RWS -
+_______________________________________________________________________________
+
+  Remote Workplace Server enables a program to invoke any class or object
+  method or any SOM function in the WPS process without the use of SOM or
+  DSOM.  All types of arguments and return values are supported.  Data that
+  is accessible or meaningful only in the WPS process (e.g. a buffer or
+  object pointer) can be copied or converted to make it available to the
+  calling process.
+
+  On input, objects can be referenced by fully-qualified name or title,
+  object ID, handle, container record pointer, or the handle of an open view.
+  Classes can be specified by name or reference to an object of that class.
+  On output, an object pointer can be converted to any of these, or to an
+  unqualified name or title, path, icon, and more.
+
+  After a successful call to RWS, all data that was used in the transaction
+  is available for use by the calling program:  its original input, the
+  arguments that were actually passed to the WPS procedure, the output of
+  the procedure exactly as it was returned, and that output after being
+  copied or converted by RwsServer.  Clients can reuse WPS-specific data
+  to improve efficiency or as input to functions that require such data
+  (e.g. enumeration functions).
+
+  RWS also provides RwsConvert, an object conversion feature which transforms
+  one type of object reference to another, e.g. object handle to object title.
+  Multiple objects can be converted with a single call.  In addition, RWS
+  offers a command feature to handle operations that require extra support
+  within the WPS process (e.g. displaying an object's menu).
+
+  RWS is designed so it can be used on a program's primary (UI) thread without
+  blocking the message queue.  This is not a requirement - it can be used on
+  any of a program's first 32 threads provided it has a message queue.
+
+  In the WPS process, RwsServer is hosted by the "RWSxx" object class, a
+  subclass of WPTransient.  Although it must be registered with the WPS,
+  it will not be loaded until needed by a client program.  The class creates
+  no permanent objects and provides no functionality beyond creating a
+  separate thread upon which RwsServer will run.  When the last program
+  using RWS terminates, the dll containing RwsServer will be unloaded.
+
+  A final note:  RwsServer and RwsClient contain no runtime environment that
+  might conflict with your code, and both dlls perform extensive parameter
+  checks.  While they are unlikely to have problems with obvious errors like
+  null pointers, slightly more subtle coding errors may cause unexpected
+  results.  RwsClient provides no exception handling, so crashes are possible.
+  The exception handling in RwsServer makes crashes in the WPS unlikely but
+  access violations may leave the WPS in an inconsistent state.  Be careful.
+
+_______________________________________________________________________________
+
+|- Changes in v0.80 -
+_______________________________________________________________________________
+
+| v0.80, the fourth release of RWS, addresses design flaws in previous
+  versions that could lead to lost messages and unexpected results.
+  It also adds new functions for tracking and cancelling requests to
+  RWSServer, as well as some smaller enhancements.
+
+| == New and Revised Features ==
+
+| Dispatch Status Functions:  These enable other windows in an app
+    to track a request to the server asynchronously.  They can be
+    used to popup non-modal "wait or cancel" dialogs, or to avoid
+    calling RWS recursively.
+    - RwsDispatchStatus() determines if the current thread is in a
+      dispatch and whether it is blocked by another message loop.  
+    - RwsNotify() posts WM_CONTROL notifications to a window when
+      RWSClient enter or exits its message loop.
+    - RwsCancelDispatch() causes RWSClient to time-out a dispatch
+      and return immediately if possible.
+
+| RWSCMD_DELETE:  This new command will optionally force the deletion
+    of non-deletable objects.
+
+| RwsConvert:  The ability to convert a WPS object pointer into something
+    usable by your program has been extended to objects used in method
+    calls and RWS Commands.  Your app can both perform a task involving
+    an object and gather info about it in a single call.
+
+| Extended Version Information:  RWS08 provides more precise versioning
+    via a new function, RwsQueryVersion(), & a new macro, RWSFULLVERSION.
+
+| == Bugs Fixed ==
+
+| Message Handling:  In previous versions, replies from the server could
+    be lost if another message loop overrode RwsClient's (e.g. while the
+    user moved or resized a window).  Message handling has been changed
+    to prevent this.  However, RWS's dispatch function is still unable
+    to return control to its caller until the overriding message loop is
+    removed and its own loop is active again.
+
+| Recursive Calls to RwsDispatch():  
+    A call to RwsDispatch() when the current thread was already in a
+    dispatch would create a new message loop that overrode RWS's existing
+    loop.  In v0.80, these calls now return RWSCLI_RECURSIVECALL. The new
+    dispatch status functions can be used to avoid this error.
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+== USING RWS ==
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+ - Overview -
+_______________________________________________________________________________
+
+  After you've created a message queue, you must call RwsClientInit() to
+  prepare RWS for use in the current process.  This call will cause the
+  server to be loaded;  optionally, it will also register the RWSxx class
+| if needed.  Like most RWS functions, it will return zero if successful
+  or a descriptive error code if it fails.
+
+  When you need to call a WPS object method, a SOM function, an RWS command,
+  or RwsConvert, you will usually use one of two functions:  RwsCall() or
+  RwsCallIndirect().  They operate the same and vary only in the way you pass
+  parameters to them.  These parameters include the data that will be passed
+  to the procedure along with a description of that data so RWS knows how to
+  handle it.
+
+  Calls to these functions will not return until the server replies or a
+  timeout occurs.  While waiting for a reply, RwsClient will enter a message
+| loop so the queue doesn't block.  During the wait, your app may handle
+| other messages.  If it does, it should not call RwsCall() again nor use
+| code that installs its own message loop (e.g. WinDlgBox()).  Functions
+| like RwsDispatchStatus() will identify whether RWS is in use and waiting.
+
+  Upon return, RWS provides a pointer to a block of memory containing all
+  of the data used in the transaction:  your input, any intermediate values,
+  and the final result.  To retrieve the final value of the return or any
+  argument, you can call RwsGetResult().  To access any of the data directly,
+  you can use RwsGetArgPtr().  When you're done with this memory block, you
+  must release it using RwsFreeMem().
+
+  Before your program ends, it should call RwsClientTerminate() to ensure an
+  orderly shutdown.  An entry in your program's Exit List will handle this if
+  your program terminates prematurely.
+
+_______________________________________________________________________________
+
+ - Calling RWS -
+_______________________________________________________________________________
+
+  RwsClient provides two primary functions for calling RwsServer:  RwsCall()
+  and RwsCallIndirect().  Both of them build a request from the parameters
+  you supply, dispatch it to the server, then return when a reply is received
+  or a timeout occurs (currently 20 seconds).  The only difference between the
+  two is how you pass parameters to them.
+
+  RwsCall() takes individual arguments that are pushed onto the stack, while
+  RwsCallIndirect() takes a pointer to an RWSBLD structure followed by zero or
+  more RWSARG structures.  These structures mimic the layout of the stack that
+  RwsCall() would see and contain exactly the same arguments you'd pass to it.
+
+  Which function you use depends largely on what you are doing. In most cases,
+  it's simpler to use RwsCall().  However, if you're calling the same function
+  repeatedly or you're using RwsConvert on a large number of objects, then
+  RwsCallIndirect() is probably the better choice.  Here are their prototypes:
+
+  ULONG   _System RwsCall( PRWSHDR* ppHdr, ULONG callType, ULONG callValue,
+                           ULONG rtnType,  ULONG rtnSize,  ULONG argCnt, ...);
+
+  ULONG   _System RwsCallIndirect( PRWSBLD pBld);
+
+  The arguments to these functions are described in detail in the API section,
+  below.  The next section, "Type RWSP_*" describes two of them in detail:
+  callType and callValue.
+
+  RwsClient provides additional functions that you may wish to use in special
+  circumstances.  RwsBuild() and RwsBuildIndirect() construct a server request
+  block but do not dispatch it.  Instead, they return immediately with a
+  pointer to the request.  This enables you to modify its data in a way that
+  RwsClient can not - for example, updating pointers embedded in a structure.
+  After you've made your changes, you can then call RwsDispatch() to dispatch
+  the request.  Here is its prototype:
+
+  ULONG   _System RwsDispatch( PRWSHDR pHdr);
+
+  RwsClient also offers various ...Async() calls if you'd prefer to handle
+  replies from the server yourself.  All of these calls return immediately
+  after dispatching your request.  Their signatures are the same as those
+  above except that the first argument is the handle of the window to which
+  RwsServer should post its reply.  Use RwsGetServerMsgID() to obtain the
+  ID of the server's reply message.
+
+_______________________________________________________________________________
+
+  Type RWSP_*
+  -----------
+
+  RwsServer supports 4 distinct operations:  method calls, SOM function
+  calls, built-in RwsCommands, and RwsConvert, the object converter.  An
+  RWSP_ constant in the 'callType' argument to RwsCall/RwsBuild identifies
+  which one you want.  Data placed in the 'callValue' argument provides the
+  information needed to execute it.  Here's a list of the RWSP_ constants,
+  the type of data each takes, and an explanation of how each operates:
+
+    callType    callValue
+    ---------   -----------
+    RWSP_MNAM   Method Name
+        you're calling a class or object method and have supplied its name
+        as a string;  the name is identical to that shown in the WPS and SOM
+        references and does not contain a leading underscore;  the first
+        argument to the call must be the object whose method is being invoked.
+
+    RWSP_KORD   SOM Function Ordinal
+        you're calling a function contained in the SOM Kernel (i.e. som.dll)
+        and have supplied its ordinal;  you can include rwssomk.h to refer to
+        functions by a constant (e.g. SOMK_somPrintf) rather than by number.
+
+    RWSP_CMD    RWS Command ID
+        you're calling one of RWS's built-in commands and have supplied its
+|       ID (e.g. RWSCMD_POPUPMENU);  currently, there are six commands.
+
+    RWSP_CONV   Zero
+        you're calling RwsConvert to translate one form of object identifier
+        into another (e.g. to convert an object's handle into its title);
+        callValue is ignored and should be set to zero;  each argument
+        identifies a single conversion - you can perform as many conversions
+        with each call as available memory and good sense permit.
+
+    RWSP_MPFN   Method PFN
+        you're calling a class or object method and have supplied a pointer
+        to the function which implements it;  this pointer was obtained by
+        an earlier invocation of this method using RWSP_MNAM;  if you reuse
+        a method pointer, you must be certain that it will only be used with
+        objects whose class is the same as the object used in the original
+        call - using it with other classes may crash the WPS;  the first
+        argument to the call must be the object whose method is being invoked.
+
+    RWSP_KPFN   SOM function PFN
+        you're calling a function contained in som.dll and have supplied a
+        pointer to the function;  since som.dll is never unloaded, the pfn
+        should remain valid for the duration of the current WPS session.
+
+  Because RWS may have to copy or convert data after a procedure returns, it
+  has to know whether the call succeeded or failed.  If it failed, RWS will
+  skip any output conversions and return RWSSRV_FUNCTIONFAILED.  By default,
+  it assumes that a return value of zero (i.e. FALSE, NULL, etc.) indicates
+  failure.
+
+  In cases where this assumption isn't valid, you can add an 'I' at the end
+  of the RWSP_ constant to have it Ignore the return value and perform output
+  processing regardless, or you can add a 'Z' to tell it that Zero indicates
+  success.  
+
+      Ignore Return:    RWSP_MNAMI  RWSP_KORDI  RWSP_MPFNI  RWSP_KPFNI
+    Zero is Success:    RWSP_MNAMZ  RWSP_KORDZ  RWSP_MPFNZ  RWSP_KPFNZ
+                 
+  Of course, none of this applies to methods or functions that return void,
+  nor does it apply to RWSP_CONV or RWSP_CMD.
+
+_______________________________________________________________________________
+
+ - Getting the Results -
+_______________________________________________________________________________
+
+  After a successful call to RWS returns, all of the data that was used in
+  the transaction is available to you:
+    - the data that you provided
+    - the data RwsServer generated by converting your input
+    - the data returned by the procedure you were calling
+    - the data RwsServer generated by converting the procedure's output
+  Even a pointer to the method or function that was called is available.
+
+  There are currently two ways to access this data:
+
+  ULONG   _System RwsGetResult( PRWSHDR pHdr, ULONG ndxArg, PULONG pSize);
+  ULONG   _System RwsGetArgPtr( PRWSHDR pHdr, ULONG ndxArg, PRWSDSC* ppArg);
+
+  For both functions, arguments are numbered starting at 1;  to get the
+  return value, set argNdx to zero.
+
+  RwsGetResult() returns the final value of an argument, after any copying or
+  conversion by RwsServer.  Unlike other RwsClient functions, RwsGetResult()
+  returns a value rather than a result code.  Errors are signaled by a return
+  of (ULONG)-1.  pSize is optional (it can be null), and its name is somewhat
+  misleading.  Beside providing size info, it attempts to signal the type of
+  data being returned.  If the entire result fits in the return value, *pSize
+  is zero;  if the return is a pointer to a string, *pSize is (ULONG)-1.
+  Otherwise, the return is a pointer to a buffer, and *pSize contains the
+  calculated length of its data.
+
+  RwsGetArgPtr() retrieves a pointer to the RWSDSC structure for the specified
+  argument (or return).  Using it, you have access to all data associated with
+  that argument.  Refer to the "Server Request Block" section below and to the
+  source code for RwsClient & RwsServer for specifics on what data goes where.
+
+_______________________________________________________________________________
+
+ - Cleanup -
+_______________________________________________________________________________
+
+  After you've retrieved whatever data you need from the server request block,
+  you must free it by calling RwsFreeMem().
+
+  ULONG   _System RwsFreeMem( PRWSHDR pHdr);
+
+  Calling RwsFreeMem() with a null pointer is not an error.  To avoid leaks,
+  always initialize pHdr to zero before calling RwsCall() or RwsBuild() and
+  then always call RwsFreeMem() at an appropriate point, regardless of whether
+  or not the call succeeded.  In some cases, RwsFreeMem() may return
+  RWSCLI_MEMINUSE.  This error can be ignored - RWS will free the memory
+  automatically when it is safe to do so.
+
+_______________________________________________________________________________
+
+ - RWS Types -
+_______________________________________________________________________________
+
+  In order to pass data across process boundaries, RWS has to copy it
+  to shared memory.  RWS types provide the info it needs to handle this
+  correctly.  They also identify the conversions RwsServer has to perform
+  to make your input usable by the procedure you're calling, and to make
+  its output usable by your program.  Their only purpose is to inform RWS
+  what it has to do with your data.  RWS doesn't know or care what you or
+  the procedure are going to do with it.  Understanding this will make it
+  far easier to decide which type to use.
+
+  RWS types are identified by symbolic constants defined in rws.h.
+  They fall into 5 broad categories, identified by their prefix:
+
+    RWSI_   arguments that only need handling before the procedure call
+            (note that all arguments need some sort of handling)
+
+    RWSO_   arguments that need handling both before and after the call
+            (typically, in/out args used to return a pointer to some data)
+
+    RWSR_   the return value from a procedure
+
+    RWSC_   arguments to RWS's conversion feature - by their nature,
+            they usually require both before and after processing
+
+    RWSP_   the type of procedure you are calling
+
+  While rws.h lists almost 200 types, the number of basic types is really
+  very small.  Most of the rest are for converting WPS object pointers to
+  and from data that's meaningful outside the WPS.  They were defined to
+  ensure that almost every possibility is covered - you'll probably only
+  use a small subset.
+
+  Below is a review of the basic types.  Types for converting WPS objects
+  and classes are described under "Types for Object Conversion".
+
+_______________________________________________________________________________
+
+  Type RWSI_*
+  -----------
+
+    RWSI_ASIS   a DWORD that requires no special handling (i.e. use as-is)
+    RWSI_PSTR   a pointer to a string
+    RWSI_PBUF   a pointer to a fixed-length buffer - you must supply its size
+    RWSI_PPVOID a pointer to a 4-byte buffer - you can also use RWSI_PULONG
+
+  You'll also see types like RWSI_PSOMBUF and RWSI_POBJSTR.  These are for
+  special situations where the input data must be copied to memory allocated
+  by SOM or by an object before it can be passed to the procedure (e.g. a
+  USEITEM).
+
+| Note:  RWSI_PBUF & RWSI_PSTR can be used to pass an empty buffer to a
+| function.  Specify the size of the buffer needed (RWSI_PSTR defaults
+| to 260), and use zero for the argument's value (i.e. a null pointer).
+
+_______________________________________________________________________________
+
+  Type RWSO_*
+  -----------
+
+    RWSO_PPSTR  the procedure will be returning a pointer to a string in an
+                in/out argument;  RWS has to copy that string into its own
+                buffer so you can access it;  if you don't specify the size
+|               of the buffer, RWS will allocate 260 bytes (i.e. CCHMAXPATH)
+
+    RWSO_PPBUF  the procedure returns a pointer to a fixed-length buffer
+                in an in/out argument;  RWS has to copy it into its own
+                buffer so you can access it;  you must specify the size of
+                the buffer - RWS will copy exactly that many bytes into it
+
+    RWSO_PPBUFCNTRTN, RWSO_PPBUFCNTARG1, RWSO_PPBUFCNTULONG, etc.
+                these are similar to RWSO_PPBUF except that they instruct
+                RWS to look elsewhere for the number of bytes to copy,
+                e.g. the count is in the return value, in another in/out
+                arg, in a ULONG at the start of data to be copied, etc;
+                you must still specify the maximum size of the buffer
+
+  You'll also see types like RWSO_PPBUFSOMFREE and RWSO_PPSTROBJFREE.  These
+  tell RWS to free the SOM or object memory holding the data after copying it.
+
+_______________________________________________________________________________
+
+  Type RWSR_*
+  -----------
+
+    RWSR_ASIS   returns a DWORD that needs no special handling
+    RWSR_VOID   returns void
+    RWSR_PSTR   returns a pointer to a string
+    RWSR_PPSTR  returns a pointer to a pointer to a string
+    RWSR_PBUF   returns a pointer to a fixed-length buffer
+    RWSR_PPBUF  returns a pointer to a pointer to a fixed-length buffer
+
+  All return types except RWSR_ASIS and RWSR_VOID require a buffer into
+  which RWS can copy the data.  For pointers to string, RWS will default
+  to 260 bytes if you set size to zero;  for pointers to a buffer, the
+  size must be supplied.  Just like RWSO_*, there are addition RWSR_ types
+  that tell RwsServer where to look for the exact number of bytes to copy.
+
+_______________________________________________________________________________
+
+  Types for Object Conversion
+  ---------------------------
+
+  All WPS methods and most SOM functions require at least one class or
+  object pointer as input, and many return one or more as output.  Since
+  these pointers are meaningless outside the WPS process, RWS will convert
+  them to and from external formats usable by your program (e.g. name,
+  object handle, etc.).
+
+  RWS supports 5 external formats that can be converted into object pointers.
+  It also provides several additional formats for converting object pointers
+  back into something your program can use (e.g. title, path, icon, etc.).
+
+  The RWSI_, RWSO_, & RWSR_ constants below identify the conversion needed:
+
+
+  Input (RWSI_) - object & class references you supply to a method:
+
+    RWSI_OPATH   a file or folder's fully-qualified name (#)
+    RWSI_OFTITLE an object's fully-qualified title;  if the title itself
+                 contains backslashes they must be escaped by doubling (#$)
+    RWSI_OHWND   the HWND of an object's open view
+    RWSI_OHNDL   an object handle
+    RWSI_OPREC   an object's minirecordcore pointer (obtained via d&d)
+
+    RWSI_SFTITLE if this is a shadow's fully-qualified title, use the
+                 original object instead (#$)
+    RWSI_SHNDL   if this is a shadow's handle, use the original object instead
+    RWSI_SPREC   if this is a shadow's minirecordcore, use the original object
+
+    RWSI_CNAME   the name of a class
+
+    RWSI_COPATH  the class of the object whose path was supplied (#)
+    RWSI_COHNDL  the class of the object whose handle was supplied
+    etc.
+
+    # - for input, OPATH & OFTITLE also accept an object's <Object ID>
+    $ - locating an object using its title is a relatively "expensive"
+        operation and should be avoided if the object can be identified
+        another way (e.g. by its Object ID or handle)
+
+
+  Output (RWSO_ & RWSR_) - object & class references returned by a method:
+
+    RWSx_OPATH   as above, fails if not a file or folder
+    RWSx_OFTITLE as above, backslashes in the title will not be escaped
+    RWSx_OHWND   as above, fails if no view is open
+    RWSx_OHNDL   as above
+    RWSx_OPREC   as above
+    RWSx_CNAME   as above, works with both class & object pointers
+
+    RWSx_ONAME   a file or folder's real name, the title of any other object
+    RWSx_OTITLE  an object's title - this may not match a file's real name
+    RWSx_OID     an object's Object ID, fails if none is assigned
+    RWSx_OFLDR   the fully-qualified name of the folder containing an object
+    RWSx_OICON   an object's full-sized icon
+    RWSx_OMINI   an object's mini icon
+    RWSx_CICON   a class' default icon, works with both class & object ptrs
+    RWSx_CMINI   a class' default mini-icon, works with class & object ptrs
+
+_______________________________________________________________________________
+
+ - RwsConvert -
+_______________________________________________________________________________
+
+  Often, a program's primary reason for accessing the WPS will be to convert
+  an object reference from one external format to another.  For example:
+  you have a list of object handles and want to get each one's title;  or,
+  an object was dropped on your window and you'd like to retrieve its icon.
+  RwsConvert was designed to handle these tasks.
+
+  RwsConvert permits you to perform as many conversions in a single call
+  as seems reasonable.  Each conversion is handled individually:  the call
+  proceeds even if some conversions fail and only returns an error code if
+  all fail.
+
+  You can determine whether a particular conversion failed in two ways:
+  if you call RwsGetResult(), it will return (ULONG)-1 for a failure;  or,
+  if you call RwsGetArgPtr(), the 'rc' field for that RWSDSC structure will
+  contain a non-zero return code.  You can also identify whether any of the
+  conversions failed by examining the call's return value (i.e. arg0) which
+  will contain a count of the number of successful conversions.
+
+  For each argument to RwsCall...() or RwsBuild...(), you'll supply one of
+  the RWSC_ constants described below, the object data to be converted (cast
+  to a ULONG, as needed), and optionally, the size of the output buffer if
+  the result will be a string (the default size is 260 bytes, enough for a
+  fully-qualified path).
+
+  When converting the same object into multiple formats (e.g. handle to title,
+  object ID, and icon), you can improve RwsServer's efficiency by using the
+  appropriate RWSC_PREV_* constants.  These tell RWS to reuse the previous
+  argument's object pointer rather than performing an input conversion for
+  each item.  For example, the first argument would use RWSC_OHNDL_OTITLE
+  to convert the handle to an object pointer, and then to the object's title.
+  The next two would use RWSC_PREV_OID and RWSC_PREV_OICON to reuse the
+  previous argument's object pointer.  If the initial conversion from handle
+  to object pointer fails, all three will fail and the error code for each
+  will be the same.
+
+_______________________________________________________________________________
+
+  Type RWSC_*
+  -----------
+
+  All the RWSC_ constants follow a simple naming convention that should make
+  it easy to deduce the one you want:  RWSC_Input_Output.  Rather than listing
+  every one, here's a listing of Input and Output - just mix-and-match:
+
+                Input              Output
+                -----              ------
+                OBJ                 OBJ
+                OPATH               OPATH
+                OFTITLE             OFTITLE
+                OHWND               OHWND
+                OHNDL               OHNDL
+                OPREC               OPREC
+                SFTITLE             ONAME
+                SHNDL               OTITLE
+                SPREC               OID
+                PREV                OFLDR
+                CLASS               OICON
+                                    OMINI
+                                    CLASS
+                                    CNAME
+                                    CICON
+                                    CMINI
+
+  Note that these lists include three types not mentioned previously:
+
+    OBJ         pointer to an object (usable only within the WPS process)
+    CLASS       pointer to a class  (usable only within the WPS process)
+    PREV        reuse the previous argument's object pointer
+
+  Here are a few examples:
+
+    RWSC_OPATH_OHWND    in: an object's f/q name;  out: an open view's hwnd
+    RWSC_OPREC_OICON    in: a minirecordcore ptr;  out: the object's icon
+    RWSC_SHNDL_CNAME    in: handle of an object or its shadow;
+                        out: the name of the original object's class
+
+  Two additional RWSC_ types are defined that aren't for object conversion.
+  Rather, they retrieve buffers or strings from an address in the WPS process
+  space.  They're useful when you have a structure containing a pointer and
+  need to access the data it references.
+
+    RWSC_ADDR_PSTR      in: pointer to a string;  out: a copy of the string
+    RWSC_ADDR_PBUF      in: pointer to a buffer;  out: a copy of the buffer 
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+== API ==
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+ - Functions -
+_______________________________________________________________________________
+
+  RwsBuild:
+
+    ULONG   _System RwsBuild( PRWSHDR* ppHdr,
+                              ULONG callType, ULONG callValue,
+                              ULONG rtnType,  ULONG rtnSize,
+                              ULONG argCnt, ...);
+
+    Constructs a server request block in shared memory from arguments passed
+    on the stack.  Returns as soon as the request is built;  the application
+    must call RwsDispatch() or RwsDispatchAsync() to submit the request to
+    RwsServer.  Provided to enable the application to modify arguments in ways
+    that RwsClient can not.  Can also be used to create a skeleton request
+    block that the app will repeatedly reuse with minor modifications.
+    Returns zero for success or one of the error codes generated by RwsClient.
+    See below for a description of its arguments.
+_______________________________________________________________________________
+
+  RwsBuildIndirect:
+
+    ULONG   _System RwsBuildIndirect( PRWSBLD pBld);
+
+    Provides exactly the same functionality as RwsBuild().  Its single
+    argument is a pointer to an RWSBLD structure that may be followed by
+    zero or more RWSARG structures.  The address of the first RWSARG must
+    be &pBld[1].  Use the CALCARGPTR(p) macro to calculate this address and
+    cast it as a PRWSARG.  See below for a description of the members of
+    RWSBLD and RWSARG.
+_______________________________________________________________________________
+
+  RwsCall:
+
+    ULONG   _System RwsCall( PRWSHDR* ppHdr,
+                             ULONG callType, ULONG callValue,
+                             ULONG rtnType,  ULONG rtnSize,
+                             ULONG argCnt, ...);
+
+    Constructs a server request block in shared memory from arguments passed
+    on the stack, then dispatches it to RwsServer.  Returns after a reply has
+    been received from the server or a timeout has occurred.  Provides the
+    simplest way for an application to invoke RWS functionality.  Internally,
+    it calls RwsBuildIndirect(), and if that is successful, it then calls
+    RwsDispatch().  Returns zero for success or any of the error codes
+    generated by RwsClient or RwsServer, depending on where the failure
+    occurred.  See below for a description of its arguments.
+_______________________________________________________________________________
+
+  RwsCallIndirect:
+
+    ULONG   _System RwsCallIndirect( PRWSBLD pBld);
+
+    Provides exactly the same functionality as RwsCall().  Its only argument
+    is a pointer to an RWSBLD structure that may be followed by zero or more
+    RWSARG structures.  The address of the first RWSARG must be &pBld[1].
+    Use the CALCARGPTR(p) macro to calculate this address and cast it as a
+    PRWSARG.  See below for a description of the members of RWSBLD and RWSARG.
+_______________________________________________________________________________
+
+  RwsCallAsync:
+
+    ULONG   _System RwsCallAsync( HWND hwnd, PRWSHDR* ppHdr,
+                                  ULONG callType, ULONG callValue,
+                                  ULONG rtnType,  ULONG rtnSize,
+                                  ULONG argCnt, ...);
+
+    Similar to RwsCall() except that the server's reply message is posted
+    to a window provided by the application.  Unlike RwsCall(), it returns
+    immediately after dispatching the request to RwsServer.  It is the
+    application's responsibility to capture the server's reply message and
+    handle it appropriately.  Failure to do so will result in a memory leak
+    that will quickly exhaust RwsClient's shared memory pool.  Provided to
+    give applications additional design flexibility, particularly in cases
+    where it would be inappropriate for RwsClient to enter its own message
+    loop while waiting for a reply.  Returns zero for success or one of the
+    error codes generated by RwsClient.  Error codes generated by RwsServer
+    will be returned in mp2 of the reply message.  The first argument to
+    this function is the window to which the reply should be posted.  See
+    below for a description of the other arguments.
+_______________________________________________________________________________
+
+  RwsCallIndirectAsync:
+
+    ULONG   _System RwsCallIndirectAsync( HWND hwnd, PRWSBLD pBld);
+
+    Provides exactly the same functionality as RwsCallAsync().  Its single
+    argument is a pointer to an RWSBLD structure that may be followed by
+    zero or more RWSARG structures.  The address of the first RWSARG must
+    be &pBld[1].  Use the CALCARGPTR(p) macro to calculate this address and
+    cast it as a PRWSARG.  The first argument to this function is the window
+    to which the reply should be posted.  See below for a description of the
+    members of RWSBLD and RWSARG.
+_______________________________________________________________________________
+
+  RwsClientInit:
+
+    ULONG   _System RwsClientInit( BOOL fRegister);
+
+    Initializes RWS for the current process and causes RwsServer to be loaded
+    in the WPS process if necessary.  In particular, it allocates the gettable
+    shared memory that will be used to pass requests between client & server,
+    and creates an object window that the server will post its replies to.
+    To ensure RwsServer gets loaded and stays loaded, this call creates a WPS
+    object of class RWSxx.  If fRegister is TRUE, it will register the class
+    if needed.  To permit RwsServer to be unloaded, clients should call
+    RwsClientTerminate() before exiting to delete the object. In any case,
+    the object will cease to exist when the WPS terminates.  Returns zero
+    for success or one of the relevant error codes generated by RwsClient.
+_______________________________________________________________________________
+
+  RwsClientTerminate:
+ 
+    ULONG   _System RwsClientTerminate( void);
+ 
+    Deletes the WPS object created by RwsClientInit() so that RwsServer can
+    be unloaded when the last program using it terminates.  While the server
+    remains loaded, users will be unable to move or delete the dll that
+    contains it.  If this function isn't called, an entry in the program's
+    Exit List will handle termination (note:  calling this function will
+    remove the Exit List entry).  Returns RWSCLI_TERMINATEFAILED or zero
+    for success.
+_______________________________________________________________________________
+
+  RwsDispatch:
+
+    ULONG   _System RwsDispatch( PRWSHDR pHdr);
+
+    Posts your request to RwsServer then waits for its reply.  If a reply
+    is not received within the timeout period, it will return with an error.
+    This timeout can be changed using RwsSetTimeout().  Before posting the
+    request, this function confirms the server is active and restarts it if
+    needed (as described under RwsClientInit()).  While waiting for a reply,
+    this function enters a message loop and dispatches any messages it
+    receives.  If a WM_QUIT is encountered, it reposts that message then
+    exits with an error.  Your application's design should take into account
+    the possibility that other parts of it may become active while its WPS-
+    related code is waiting for a reply.  Returns zero for success of an
+    error code generated by RwsServer.
+_______________________________________________________________________________
+
+  RwsDispatchAsync:
+
+    ULONG   _System RwsDispatchAsync( HWND hwnd, PRWSHDR pHdr);
+
+    Posts your request to RwsServer then returns immediately.  The hwnd you
+    provide identifies the application-supplied window to which the server
+    should reply.  The ID of the reply message can be obtained by calling
+    RwsGetServerMsgID().  Regardless of how the application handles this
+    message, it must always free the server request block identified in mp1.
+    Failure to do so will result in a memory leak that will quickly exhaust
+    RwsClient's shared memory pool.  Provided to give applications additional
+    design flexibility, particularly in cases where it would be inappropriate
+    for RwsClient to enter its own message loop while waiting for a reply.
+    Returns zero for success or an error code generated by RwsClient.  The
+    return value from RwsServer can be found in mp2 of the reply message.
+_______________________________________________________________________________
+
+  RwsFreeMem:
+
+    ULONG   _System RwsFreeMem( PRWSHDR pHdr);
+
+    Frees the server request block returned by the RwsBuild... and RwsCall...
+    functions.  Supplying a null pointer is not an error.  This function
+    must always be called to avoid depleting RwsClient's shared memory pool
+    (currently, 64k-64).  Note that this is a wrapper for DosSubFreeMem()
+    and will fail if the Size member of the RWSHDR structure has been changed
+    from its original value.  Returns zero for success or RWSCLI_BADMEMPTR if
+    pHdr is invalid.  Returns RWSCLI_MEMINUSE when called after a server reply
+    has timed-out.  This error can be ignored because RwsClient will free the
+    request block itself when the next server reply is received.
+_______________________________________________________________________________
+
+  RwsGetArgPtr:
+
+    ULONG   _System RwsGetArgPtr( PRWSHDR pHdr, ULONG ndxArg, PRWSDSC* ppArg);
+
+    Provides a pointer to the RWSDSC structure specified in ndxArg.  Arguments
+    are indexed from one;  the return value is index zero.  Each RWSDSC
+    structure contains all of the data associated with an argument or return:
+    your input, any intermediate values, and the final value.  For an in-only
+    argument, the intermediate value is your input after RwsServer has
+    performed the requested conversion (e.g. object handle to object pointer).
+    For the return and in/out args, it also provides whatever data was
+    returned by the procedure in its original form;  the final value is
+    the procedure's output after it has been copied or converted by RwsServer.
+    Provided to enable easy access to data that is only valid within the WPS
+    process (i.e. pointers) so that it can be reused in subsequent calls.
+    Returns zero for success or RWSCLI_BADARGNDX or RWSCLI_MISSINGARGS.
+_______________________________________________________________________________
+
+  RwsGetResult:
+
+    ULONG   _System RwsGetResult( PRWSHDR pHdr, ULONG ndxArg, PULONG pSize);
+
+    Returns the final value of the procedure's return or any of its arguments.
+    Unlike most other RWS function, the return contains the requested value,
+    not an error code.  Errors are signaled by a return value of (ULONG)-1.  
+    Arguments are indexed from one;  the return value is index zero.  pSize is
+    optional and may be null.  If supplied, it signals the type of value being
+    returned:  zero if the return is a DWORD (e.g. a ULONG or object pointer);
+    (ULONG)-1 if the return is a pointer to a string; or a positive number if
+    the return is a pointer to a buffer.  In this last case, the number
+    indicates how many bytes RwsServer copied into the buffer.  Returns the
+    requested value for success or (ULONG)-1 if ndxArg is out of range or the
+    return value is requested for a procedure that returns void.
+_______________________________________________________________________________
+
+| RwsDispatchStatus:
+|
+|   ULONG   _System RwsDispatchStatus( PBOOL pfReady);
+|
+|   Determines whether RWS is currently in a dispatch, and optionally,
+|   whether an event is ready.  Returns zero if RWS is in a dispatch or
+|   RWSCLI_NOTINDISPATCH if it isn't.  pfReady is optional and indicates
+|   whether a reply was received from the server or a timeout occurred.
+|   If TRUE, it implies that another message loop has overridden RWS's
+|   and that RWS will be unable to return to its caller until its own
+|   message loop is active again.  This function can also be used to avoid
+|   making recursive calls to RWS's dispatch functions which are guaranteed
+|   to fail.  Returns zero, RWSCLI_NOTINDISPATCH, or RWSCLI_BADTID.
+_______________________________________________________________________________
+
+| RwsCancelDispatch:
+|
+|   ULONG   _System RwsCancelDispatch( HWND hNotify, ULONG idNotify);
+|
+|   Attempts to cancel a dispatch on the current thread by causing an
+|   immediate timeout.  The server may continue to process the dispatch
+|   but its reply will be discarded when received.  If fully successful,
+|   RwsDispatch() will return to its caller when the code that's calling
+|   RwsCancelDispatch() completes.  hNotify and idNotify are optional.
+|   If both are supplied, a WM_CONTROL message will be posted to hNotify
+|   to identify the result. The low word of mp1 contains idNotify, the
+|   high word contains RWSN_CANCEL.  mp2 is a boolean;  if TRUE, RWS will
+|   have returned by the time this message is received.  If FALSE, another
+|   message loop has overridden RWS's:  RWS won't be able to return while
+|   it is still in place.  Note: if RWS was blocked by another message
+|   loop when the server's reply was received, this function may cause
+|   the reply to be returned rather than a timeout.  Returns zero for
+|   success, or RWSCLI_NOTINDISPATCH, or one of several PM-related errors.
+_______________________________________________________________________________
+
+| RwsNotify:
+|
+|   ULONG   _System RwsNotify( HWND hNotify, ULONG idNotify);
+|
+|   Posts WM_CONTROL notifications to hNotify when these events occur:
+|     RWSN_ENTER   - RWS has entered its message loop
+|     RWSN_EXIT    - RWS has exited its message loop
+|     RWSN_BLOCKED - a reply has been received or a timeout has occurred
+|                    but RWS is blocked by another message loop
+|   These notification codes appear in the high-order word of mp1.  The
+|   low-order word contains idNotify;  it can be any value that doesn't
+|   conflict with IDs assigned to hNotify's dialog controls.  For RWSN_EXIT,
+|   mp2 contains the result code returned by RwsDispatch.  Both hNotify and
+|   idNotify must be supplied;  if either or both are zero, notifications
+|   will stop.  Notifications can be used to prevent actions or clear
+|   conditions that might block RWS (e.g. displaying a modal dialog) or to
+|   give the app greater control over timeouts.  For example, an app might
+|   set a long timeout but popup a *non-modal* wait-or-cancel dialog after
+|   a few seconds delay.  Returns zero for success or RWSCLI_MISSINGARGS
+|   or RWSCLI_BADTID.
+_______________________________________________________________________________
+
+| RwsQueryVersion:
+|
+|   ULONG   _System RwsQueryVersion( PULONG pulReserved);
+|
+|   Returns the the value that RWSFULLVERSION (defined in rws.h) was set to
+|   when RwsCliXX.Dll was built.  For RWS v0.80 GA, this value is 0x08000100.
+|   Applications can compare the return to the current value of RWSFULLVERSION
+|   to confirm that the dll in use meets the app's minimum requirements.
+|   Unlike other RWS functions, this can be called before RwsClientInit().
+|   pulReserved is ignored and can be a null pointer.  This function does
+|   not return any errors.
+_______________________________________________________________________________
+
+  RwsGetServerMsgID:
+
+    ULONG   _System RwsGetServerMsgID( PULONG pulMsgID);
+
+    Gets the ID of the message that RwsServer uses when posting its reply to
+    a client.  Applications that use any of the ...Async() functions must
+    obtain this ID after calling RwsClientInit() so their window procedures
+    will be able to capture and handle replies from RwsServer.  The MPARAMS
+    for this message are:
+
+        (PRWSHDR) mp1 - the address of the server request block
+        (ULONG)   mp2 - RwsServer's return code;  zero indicates success
+
+    This function returns zero for success or RWSCLI_NOATOM.
+_______________________________________________________________________________
+
+  RwsGetTimeout:
+ 
+    ULONG   _System RwsGetTimeout( PULONG pulSecs, PULONG pulUser);
+ 
+    Gets the current timeout value in seconds used by RwsCall() and
+    RwsDispatch().  pulUser is optional:  if it is not NULL, it returns
+    the timeout set by the user via the RWSTIMEOUT environment variable.
+    If the user hasn't specified a timeout, its value will be zero.
+_______________________________________________________________________________
+
+  RwsSetTimeout:
+ 
+    ULONG   _System RwsSetTimeout( ULONG ulSecs);
+ 
+    Sets the current timeout value used by RwsCall() and RwsDispatch()
+    in seconds.  If ulSecs is set to zero, restores the initial value
+    (by default, 20 seconds unless the user has set it via RWSTIMEOUT).
+
+_______________________________________________________________________________
+
+ - RwsBuild / RwsCall Arguments -
+_______________________________________________________________________________
+
+  Required Arguments / RWSBLD structure
+  -------------------------------------
+
+  All versions of the RwsBuild and RwsCall functions require the same
+  parameters.  RwsBuild(), RwsCall(), and RwsCallAsync() take them as
+  individual arguments that are pushed onto the stack.  The various
+  ...Indirect() functions take them as a pointer to an RWSBLD structure
+  whose members are identical to the individual arguments.
+
+
+    PRWSHDR*    ppHdr       address of a pointer to an RWSHDR structure;
+                            on return, that pointer will have the address
+                            of the server request block
+
+    ULONG       callType    one of the RWSP_ constants
+
+    ULONG       callValue   a value appropriate for the callType, cast to
+                            ULONG (string, ordinal, pfn, or command ID);
+                            ignored for RWSP_CONV, should be zero
+
+    ULONG       rtnType     one of the RWSR_ constants
+
+    ULONG       rtnSize     size of the buffer needed to hold the procedure's
+                            return value after conversion (if any);  zero if
+                            the return is a DWORD
+
+    ULONG       argCnt      the number of arguments passed to the procedure,
+                            or the number of objects to be converted
+
+
+  Optional Arguments / RWSARG structure
+  -------------------------------------
+
+  For each argument you pass to a procedure, RWS needs three parameters:
+  type, size, and value.  RwsBuild(), RwsCall(), and RwsCallAsync() take them
+  as individual arguments that are pushed onto the stack in the order listed.
+
+  The ...Indirect() functions take them as an array of zero or more RWSARG
+  structures that immediately follow RWSBLD, i.e. [RWSBLD][RWSARG]...[RWSARG]
+  The CALCARGPTR() macro will return the address of the first RWSARG.
+
+
+    ULONG       type        one of the RWSI_, RWSO_, or RWSC_ constants
+
+    ULONG       size        for input data (RWSI_), only required for fixed
+                            length buffers, zero otherwise;  for output data
+                            (RWSO_ & RWSC_), required when the return is a
+                            fixed length buffer, optional if it's a string
+                            (defaults to 260 bytes), zero otherwise
+
+    ULONG       value       a value appropriate for the data type, cast to
+                            ULONG
+
+_______________________________________________________________________________
+
+ - RWS Commands -
+_______________________________________________________________________________
+
+| Currently, six commands have been implemented.  
+
+  Important!!  In order to make command syntax easier to understand, commands
+  are presented below as though they were function calls - they are not!
+  Map a command's arguments and return value to RwsCall/RwsBuild parameters
+  the same way you would with a method call.
+
+_______________________________________________________________________________
+
+  RWSCMD_POPUPMENU:
+
+    Pseudo-code syntax
+    ------------------
+    HWND hMenu = RWSCMD_POPUPMENU( WPObject Obj, HWND hOwner,
+                                   POINTL* pptlOwner)
+
+    Parameter   Type        Size            Value
+    ---------   ---------   ----            ----------------------
+    hMenu       RWSR_ASIS   0               hwnd of the popup menu
+    Obj         RWSI_O*     0               object whose menu will be shown
+    hOwner      RWSI_ASIS   0               hwnd that "owns" the menu
+    pptlOwner   RWSI_PBUF   sizeof(POINTL)  menu position in owner coordinates
+
+    Displays the popup menu for the specified object.  hOwner will get the
+    focus before (and possibly after) the menu appears.  ptlOwner is the
+    location of the lower-left corner of the menu in hOwner coordinates.
+    Both hOwner and ptlOwner are optional and may be set to zero.  If so,
+    the Desktop will get the focus and the menu will be positioned at the
+    mouse pointer's current location.  Provided because menus require support
+    in the WPS process to map menu commands to object methods.  Returns zero
+    for success or an error code generated by RwsClient or RwsServer.
+
+_______________________________________________________________________________
+
+  RWSCMD_OPEN:
+
+    Pseudo-code syntax
+    ------------------
+    HWND hwnd = RWSCMD_OPEN( WPObject Obj, ULONG ulView, BOOL fNew)
+
+    Parameter   Type        Size            Value
+    ---------   ---------   ----            ----------------------
+    hwnd        RWSR_ASIS   0               hwnd of the opened window
+    Obj         RWSI_O*     0               object to be opened
+    ulView      RWSI_ASIS   0               view to open (OPEN_* constant)
+    fNew        RWSI_ASIS   0               force new window
+
+    Opens the requested view for the specified object.  ulView is the numeric
+    value of the desired view;  zero opens the default view.  If fNew is FALSE
+    the command will only open a new window if the requested view is not open
+    already.  When fNew is TRUE, it will always open a new window.  On return,
+    hwnd contains the handle of the frame containing the desired view.  This
+    command should be used rather than wpOpen/wpSwitchTo/wpViewObject because
+    any windows it opens will be created on the WPS's primary (UI) thread
+    rather than RwsServer's.  This helps preserve the integrity of the RWS
+    thread & avoids potential problems when sending messages between threads.
+    See RWSCMD_OPENUSING for an alternate way to open files.
+
+_______________________________________________________________________________
+
+  RWSCMD_LOCATE:
+
+    Pseudo-code syntax
+    ------------------
+    HWND hwnd = RWSCMD_LOCATE( WPObject Obj)
+
+    Parameter   Type        Size            Value
+    ---------   ---------   ----            ----------------------
+    hwnd        RWSR_ASIS   0               hwnd of the folder window
+    Obj         RWSI_O*     0               object to be located
+
+    Locates an object in a manner similar to a shadow's 'Locate' menuitem.
+    It opens or switches to the folder containing the requested object, then
+    selects the object and scrolls it into view if needed.  Unlike a shadow's
+    implementation, it will open the target folder in Details view if the
+    folder's default is Tree or Details.  Like RWSCMD_OPEN, any new windows
+    will be created on the WPS's primary (UI) thread.
+
+_______________________________________________________________________________
+
+  RWSCMD_LISTOBJECTS:
+
+    Pseudo-code syntax
+    ------------------
+    ULONG ulCnt = RWSCMD_LISTOBJECTS( WPFolder * Folder, PBYTE pBuf,
+                                      PULONG pulFlags)
+
+    Parameter   Type        Size            Value
+    ---------   ---------   ----            ----------------------
+    ulCnt       RWSR_ASIS   0               number of object handles returned
+    Folder      RWSI_O*     0               folder containing objects
+    pBuf        RWSI_PBUF   ? (e.g. 1024)   in:  contents ignored
+                                            out: array of ulCnt handles
+    pulFlags    RWSI_PULONG 0               in:  zero or LISTOBJ_FILESHADOWS
+                                            out: in | LISTOBJ_OVERFLOW
+
+    If *pulFlags is zero, returns the handles of all Abstract & Transient
+    objects in a folder.  If *pulFlags is LISTOBJ_FILESHADOWS, returns the
+    handles of all files & folders which have shadows in a folder (these are
+    the original objects' handles, not the shadows').  pBuf should be large
+    enough to hold all possible handles (e.g. 1024 bytes for 256 objects).
+    If it isn't, pBuf will contain as many handles as will fit, and the
+    initial value in *pulFlags will be ORed with the LISTOBJ_OVERFLOW flag.
+    On return, ulCnt will contain the the number of handles in pBuf (which
+    may be zero).
+
+_______________________________________________________________________________
+
+  RWSCMD_OPENUSING:
+ 
+    Pseudo-code syntax
+    ------------------
+    BOOL fSuccess = RWSCMD_OPENUSING( WPObject Source, WPObject Target)
+ 
+    Parameter   Type        Size            Value
+    ---------   ---------   ----            ----------------------
+    fSuccess    RWSR_ASIS   0               indicates success or failure
+    Source      RWSI_O*     0               file or object to open
+    Target      RWSI_O*     0               object that will open Source
+ 
+    Opens a file (Source) using a specific program object/file (Target).
+    This command simulates a drag and drop operation and can be used
+    wherever it's legal to drop one object (Source) on another (Target).
+    Avoid using this command for operations where the WPS could popup a
+    confirmation or error dialog that the user doesn't expect (e.g. moving
+    or deleting files).
+
+_______________________________________________________________________________
+
+| RWSCMD_DELETE:
+|
+|   Pseudo-code syntax
+|   ------------------
+|   BOOL fSuccess = RWSCMD_DELETE( WPObject * somSelf, BOOL fForce)
+|
+|   Parameter   Type        Size            Value
+|   ---------   ---------   ----            ----------------------
+|   fSuccess    RWSR_ASIS   0               indicates success or failure
+|   somSelf     RWSI_O*     0               file or object to delete
+|   fForce      RWSI_ASIS   0               force object's deletion
+|
+|   Deletes an object.  Optionally, forces deletion by setting the object's
+|   NODELETE flag to 'NO'.  For filesystem objects, it also clears the
+|   object's file attributes.
+
+_______________________________________________________________________________
+
+ - RWS Macros -
+_______________________________________________________________________________
+
+  These are the macros that you are most likely to use in your own code.
+  Addtional function-like macros are described in rws.h.
+
+  CALCARGPTR(p):
+
+    Takes a pointer to an RWSBLD structure, returns a pointer to the first
+    RWSARG structure following it.  Used when constructing the argument
+    block that will be passed to RwsBuildIndirect() or RwsCallIndirect().
+        Implemented as:  ((PRWSARG)(PVOID)(&((PRWSBLD)p)[1]))
+
+  CALCPROCPTR(p):
+
+    Takes a pointer to a server request block's RWSHDR structure, returns
+    a pointer to the first RWSDSC following it.  That structure describes
+    the procedure being called.
+        Implemented as:  ((PRWSDSC)(PVOID)(&((PRWSHDR)p)[1]))
+
+  CALCGIVEPTR(p):
+
+    Takes a pointer to an RWSDSC structure in a server request block,
+    returns a pointer to the give buffer which follows it.  This buffer
+    contains the data for all input types except RWSI_ASIS.
+        Implemented as:  ((PBYTE)(PVOID)(&((PRWSDSC)p)[1]))
+
+_______________________________________________________________________________
+
+ - Server Request Block -
+_______________________________________________________________________________
+
+                            Server Request Block - a series of concatenated
+    Layout of a Server          structures and buffers created by RwsClient
+       Request Block            and passed to RwsServer for processing.  It
+    =================           always contains an RWSHDR followed by RWSDSC
+         RWSHDR                 structs describing the procedure & its return
+    - - - - - - - - -           value.  It may have additional RWSDSCs, one
+     RWSDSC for proc            for each argument.  Upon a successful return,
+      (give buffer)             it contains all data used in the transaction.
+    - - - - - - - - -        
+     RWSDSC for rtn         Give Buffer - except for RWSI_ASIS, contains data
+      ( get buffer)             the client gives to the server.  When present,
+    -----------------           it always starts at &RWSDSC[1];  CALCGIVEPTR()
+     RWSDSC for arg1            will provide this address.  Where a pointer
+      (give buffer)             to data is required, the give buffer contains 
+      ( get buffer)             the data & RWSDSC.value points to it.  Other- 
+    - - - - - - - - -           wise, it contains input data the server must  
+    - - - - - - - - -           copy or convert before a call. The result of  
+     RWSDSC for argN            this processing then goes into RWSDSC.value.  
+      (give buffer)                                                           
+      ( get buffer)         Get Buffer - contains data the client gets from   
+    =================           the server after it has copied or converted   
+                                RWSDSC.value.  If present, it starts on a     
+                                DWORD boundary immediately following the      
+                                Give buffer.  RWSDSC.pget points to it.       
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+== FILE LIST ==
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+  The following files are contained in the Rws development distribution.
+| All files are timestamped July 3, 2007 at 00:08:00 except those
+| associated with 'oo' - their timestamp is July 3, 2007 at 01:10:00.
+
+     RWS08\
+      |- FPos.Exe
+      |- FPos.Txt
+      |- Iconomize.Exe
+      |- Iconomize.Txt
+      |- LICENSE
+|     |- OO.Exe
+|     |- OO.Txt
+      |- Rws.H
+|     |- Rws08.Cmd
+|     |- RwsCli08.Dll
+|     |- RwsCli08.Lib
+      |- RwsErr.H
+      |- RwsSomK.H
+|     |- RwsSrv08.Dll
+      |- RwsTest.Exe
+      |- UsingRws.Txt
+      |
+      |- FPos\
+            |- FPos.Def
+            |- FPos.Dlg
+            |- FPos.H
+            |- FPos.Ico
+            |- FPos.Mak
+            |- FPos.Rc
+            |- FPosChk.Ico
+            |- FPosCmd.C
+            |- FPosCol.C
+            |- FPosDown.Bmp
+            |- FPosMain.C
+            |- FPosRc.H
+            |- FPosSort.Ptr
+            |- FPosUp.Bmp
+
+      |- Iconomize\
+            |- Icnz.Def
+            |- Icnz.Dlg
+            |- Icnz.H
+            |- Icnz.Ico
+            |- Icnz.Mak
+            |- Icnz.Rc
+            |- IcnzCmd.C
+            |- IcnzCol.C
+            |- IcnzDown.Bmp
+            |- IcnzErr.Ico
+            |- IcnzMain.C
+            |- IcnzRc.H
+            |- IcnzSort.Ptr
+            |- IcnzUp.Bmp
+
+|     |- OO\
+|           |- oo.C
+|           |- oo.Def
+|           |- oo.Mak
+
+      |- RwsCli\
+            |- RwsCli.C
+            |- RwsCli.Def
+            |- RwsCli.H
+            |- RwsCli.Mak
+            |- RwsCli.Rc
+            |- RwsCUtil.C
+
+      |- RwsSrv\
+            |- RwsCls.C
+            |- RwsCls.H
+            |- RwsCls.Idl
+            |- RwsCls.Ih
+            |- RwsSCmd.C
+            |- RwsSrv.C
+            |- RwsSrv.Def
+            |- RwsSrv.H
+|           |- RwsSrv.Ico
+            |- RwsSrv.Mak
+|           |- RwsSrv.Rc
+            |- RwsSUtil.C
+
+      |- RwsTest\
+            |- RwsTest.C
+            |- RwsTest.Def
+            |- RwsTest.Dlg
+            |- RwsTest.H
+            |- RwsTest.Ico
+            |- RwsTest.Mak
+            |- RwsTest.Rc
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+  Rich Walsh  <rws@e-vertise.com>
+  Ft Myers, FL
+
+  July 3, 2007
+_______________________________________________________________________________
+_______________________________________________________________________________
+

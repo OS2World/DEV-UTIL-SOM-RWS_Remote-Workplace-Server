@@ -1,0 +1,153 @@
+_______________________________________________________________________________
+
+== FPOS ==
+_______________________________________________________________________________
+
+   Beta version 0.80 released July 3, 2007
+
+   (C)Copyright 2004  R.L.Walsh - all rights reserved
+
+   An open-source project licensed under the Mozilla Public License
+
+   Please send your comments & questions to:  Rich Walsh <rws@e-vertise.com>
+
+_______________________________________________________________________________
+
+ - About FPos -
+_______________________________________________________________________________
+
+FPos sheds light on one of the largest and least understood os2.ini entries:
+PM_Workplace:FolderPos.  FPos lets you review its contents - and delete most
+of it.  Cleaning it up will produce a smaller os2.ini that's less likely to
+be corrupted as the WPS loads and saves the file.
+
+As the name suggests, these entries save a folder's position along with the
+colors and fonts it uses.  However, it saves this info for every view you've
+ever opened.  Open some folder in Tree view by accident and the result is an
+entry you may never use again.  Worse, it also saves all this info for every
+Properties notebook you've ever opened - not just for folders, but for files,
+program objects, everything!  (Have you ever wondered why checkini reports
+"folder position for non-folder object"?)
+
+Deleting the entries for views you never use and for most/all Properties
+notebooks presents little risk:  none of this is critical data.  If you make
+a mistake, you can simply open the folder in question, resize it, and reapply
+your choice of colors and fonts.  And, when you're all done with FPos, there's
+no need to reboot or restart the WPS.
+
+FPos was created to demonstrate the features of Remote Workplace Server
+("RWS").  RWS enables stand-alone programs to interact with the WPS as though
+they were part of it.  Programs can manipulate WPS objects in ways that were
+not available previously:  query their titles, paths, icons, etc.; popup their
+menus; and more.  RWS is an open-source project.  Contributions of code from
+developers and suggestions from users is encouraged. To foster widespread use,
+RWS is licensed under the generous terms of the Mozilla Public License.
+
+_______________________________________________________________________________
+
+ - Installing FPos -
+_______________________________________________________________________________
+
+Both FPos v0.80 and its companion utility, Iconomize v0.80, require access
+to the dlls rwssrv08 and rwscli08.  Other programs may require these as well.
+You have two choices:
+
+- put FPos.exe, the two dlls, and Iconomize.exe (if you have it) in the same
+  directory
+- put the two dlls in a directory that's on your LIBPATH, and put FPos.exe
+  (and Iconomize.exe) wherever you wish
+
+The first time you run FPos, it will register the "RWS08" WPS class.  This
+class, contained in RwsSrv08.Dll, hosts the server portion of Remote Workplace
+Server.  It creates no permanent objects and will only be loaded by the WPS
+when you run a program that uses RWS.
+
+Note:  Each version of RWS operates independently and will never conflict
+with earlier or later versions.  You can run programs that require different
+versions of the RWS dlls simultaneously without any compatibility problems.
+
+_______________________________________________________________________________
+
+ - Using FPos -
+_______________________________________________________________________________
+
+When FPos loads, it has to "wake up" every WPS object that has an entry in
+PM_Workplace:FolderPos.  This may take 5-30 seconds.  For every entry, the
+display identifies the:  object's title, the view this entry represents, the
+size of the stored data, and the object's full path.  It also shows the
+entry's key in os2.ini and identifies its position within the file.
+
+Initially, the list is sorted by title.  You can click on any column heading
+to sort the list in ascending order based on that column.  Clicking on the
+heading again will resort it in descending order.  While most columns sort
+alphanumerically, View is sorted in a "natural" order.  If you want to change
+this or you want to reverse the ascending/descending indicators, click on
+Options->Settings on the main menu.
+
+To delete items, doubleclick on them, or press Delete or Enter, or click MB2
+and select Delete or Undelete from the popup menu.  Items will be marked with
+a red 'X'.  They will not be deleted from os2.ini until you close FPos or
+select one of the options on the File menu.  You will then be asked to confirm
+that you want to delete them.
+
+Right-clicking on a group of selected items presents a limited menu that lets
+you delete or undelete all items.  Right-clicking on a single item provides a
+more versatile menu.  You can open the view this entry represents, locate the
+item (i.e. open the folder containing it), or popup the object's WPS menu.
+
+When you close FPos's main window or any of its popup windows, it will save
+the window's size, position, colors and fonts.  Closing FPos will also save
+the current sort order and any settings you've changed.  To reset everything
+to their original values, check 'Restore all defaults' on the Options->
+Settings dialog, then restart FPos.
+
+_______________________________________________________________________________
+
+What Should I Delete?
+_______________________________________________________________________________
+
+It may be easier to answer the question "what should I save?".  The answer
+here is:  your preferred view for folders you access frequently, along with
+folders where you've explicitly set the colors and fonts.
+
+The entries you should delete are those whose views say "Error", "Unknown",
+and "Settings".  You should also delete entries whose view has a number after
+it, e.g. "Icon-1".  For folders you seldom access, delete all views;  for
+folders you use frequently, delete the views you seldom use.
+
+On my system, nearly all of the folders in the Desktop tree are set to Icon
+view and have been assigned a particular color scheme.  Every other folder
+on the system (other than Drive objects) is set to Details view.  Sorting the
+list by Path made it easy for me to identify the views that were unnecessary
+and should be deleted.  Sorting by Number can help identify entries that are
+seldom used:  generally, those with low numbers haven't been changed in a
+while, those with high numbers have been updated recently.
+
+Important!!  XWP/eWP uses PM_Workplace:FolderPos to store info about the
+status bars it adds to folders.  Don't delete an XWP entry unless you also
+delete the view entry it goes with.  For example, if you only have it add
+status bars in Icon view, save the XWP entries for folders that you open in
+Icon view, and delete then for folders you open in Tree or Details view.
+
+_______________________________________________________________________________
+
+ - File List -
+_______________________________________________________________________________
+
+All files are timestamped July 3, 2007 at 00:08:00.
+
+1.  FPos.Exe
+2.  FPos.Txt
+3.  RwsSrv08.Dll
+4.  RwsCli08.Dll
+5.  Rws08.Cmd
+6.  LICENSE
+
+_______________________________________________________________________________
+
+Rich Walsh  <rws@e-vertise.com>
+Ft Myers, FL
+
+July 3, 2007
+_______________________________________________________________________________
+

@@ -1,0 +1,63 @@
+;****************************************************************************/
+;* RWS - beta version 0.80                                                  */
+;****************************************************************************/
+;
+;  RWSCLI.DEF
+;  Remote Workplace Server - Client component
+;
+;****************************************************************************/
+;
+;* ***** BEGIN LICENSE BLOCK *****
+;* Version: MPL 1.1
+;*
+;* The contents of this file are subject to the Mozilla Public License Version
+;* 1.1 (the "License"); you may not use this file except in compliance with
+;* the License. You may obtain a copy of the License at
+;* http://www.mozilla.org/MPL/
+;*
+;* Software distributed under the License is distributed on an "AS IS" basis,
+;* WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+;* for the specific language governing rights and limitations under the
+;* License.
+;*
+;* The Original Code is Remote Workplace Server - Client component.
+;*
+;* The Initial Developer of the Original Code is Richard L. Walsh.
+;* 
+;* Portions created by the Initial Developer are Copyright (C) 2004-2007
+;* the Initial Developer. All Rights Reserved.
+;*
+;* Contributor(s):
+;*
+;* ***** END LICENSE BLOCK ***** */
+;
+;****************************************************************************/
+
+LIBRARY RWSCLI08 INITINSTANCE
+DESCRIPTION 'RWS Client beta v0.80 - (C) Copyright 2004-2007 R.L.Walsh'
+PROTMODE
+DATA MULTIPLE NONSHARED LOADONCALL
+
+EXPORTS
+    RwsClientInit           @2
+    RwsCall                 @3
+    RwsCallIndirect         @4
+    RwsCallAsync            @5
+    RwsCallIndirectAsync    @6
+    RwsBuild                @7
+    RwsBuildIndirect        @8
+    RwsDispatch             @9
+    RwsDispatchAsync        @10
+    RwsFreeMem              @11
+    RwsGetResult            @12
+    RwsGetArgPtr            @13
+    RwsGetServerMsgID       @14
+    RwsGetRcString          @15
+    RwsGetTimeout           @16
+    RwsSetTimeout           @17
+    RwsClientTerminate      @18
+    RwsQueryVersion         @19
+    RwsDispatchStatus       @20
+    RwsCancelDispatch       @21
+    RwsNotify               @22
+

@@ -1,0 +1,102 @@
+/****************************************************************************/
+/* RWS - beta version 0.80                                                  */
+/****************************************************************************/
+
+// RWSCLS.IDL
+// Remote Workplace Server - Server WPS class "RWSxx" interface definition
+
+/****************************************************************************/
+
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Remote Workplace Server - Server component.
+ *
+ * The Initial Developer of the Original Code is Richard L. Walsh.
+ * 
+ * Portions created by the Initial Developer are Copyright (C) 2004-2007
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+/****************************************************************************/
+
+#include "wptrans.idl"
+#include <somcls.idl>
+
+/****************************************************************************/
+
+interface M_RWS08;
+interface RWS08 : WPTransient
+{
+
+#ifdef __SOMIDL__
+  implementation
+    {
+
+    local;
+    majorversion = 1;
+    minorversion = 2;
+    filestem = RWSCLS;
+    metaclass = M_RWS08;
+    callstyle = oidl;
+    dllname = RWSSRV08;
+
+    passthru C_ih_before =  ""
+""
+"   #define INCL_DOS"
+"   #define INCL_WIN"
+"   #include <os2.h>"
+""
+"";
+
+    passthru C_ih_after =  ""
+""
+""
+"";
+
+    somDefaultInit: override, init;
+    somDestruct: override;
+
+    };
+#endif /* __SOMIDL__ */
+};
+
+/****************************************************************************/
+
+interface M_RWS08 : M_WPTransient
+{
+
+#ifdef __SOMIDL__
+  implementation {
+
+    local;
+    majorversion = 1;
+    minorversion = 2;
+    filestem = RWSCLS;
+    callstyle = oidl;
+    dllname = RWSSRV08;
+
+    wpclsInitData: override;
+    wpclsUnInitData: override;
+    wpclsQueryIconData: override;
+    wpclsQueryTitle: override;
+
+  };
+#endif /* __SOMIDL__ */
+};
+
+/****************************************************************************/
+

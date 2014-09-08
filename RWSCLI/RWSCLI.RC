@@ -1,0 +1,137 @@
+/****************************************************************************/
+/* RWS - beta version 0.80                                                  */
+/****************************************************************************/
+
+// RWSCLI.RC
+// Remote Workplace Server - resources
+
+/****************************************************************************/
+
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Remote Workplace Server - Client component.
+ *
+ * The Initial Developer of the Original Code is Richard L. Walsh.
+ * 
+ * Portions created by the Initial Developer are Copyright (C) 2004-2007
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+/****************************************************************************/
+
+#include "..\RWSERR.H"
+
+STRINGTABLE
+BEGIN
+    RWSSRV_EXCEPTION                    "RwsSrv_Exception"
+    RWSSRV_UNKNOWNERROR                 "RwsSrv_UnknownError"
+    RWSSRV_DOSGETMEM                    "RwsSrv_DosGetMem"
+    RWSSRV_BADARGCNT                    "RwsSrv_BadArgCnt"
+    RWSSRV_PROCBADDSC                   "RwsSrv_ProcBadDsc"
+    RWSSRV_PROCTOOMANYARGS              "RwsSrv_ProcTooManyArgs"
+    RWSSRV_PROCTOOFEWARGS               "RwsSrv_ProcTooFewArgs"
+    RWSSRV_PROCBADGIVEQ                 "RwsSrv_ProcBadGiveQ"
+    RWSSRV_PROCNOPFN                    "RwsSrv_ProcNoPfn"
+    RWSSRV_PROCNOMETHODNAME             "RwsSrv_ProcNoMethodName"
+    RWSSRV_PROCNOORD                    "RwsSrv_ProcNoOrd"
+    RWSSRV_PROCBADCMD                   "RwsSrv_ProcBadCmd"
+    RWSSRV_PROCBADTYPE                  "RwsSrv_ProcBadType"
+    RWSSRV_PROCNOWPOBJ                  "RwsSrv_ProcNoWPObj"
+    RWSSRV_PROCRESOLVEFAILED            "RwsSrv_ProcResolveFailed"
+    RWSSRV_PROCQRYPROCFAILED            "RwsSrv_ProcQryProcFailed"
+    RWSSRV_ARGBADDSC                    "RwsSrv_ArgBadDsc"
+    RWSSRV_ARGNOVALUE                   "RwsSrv_ArgNoValue"
+    RWSSRV_ARGNOGIVESIZE                "RwsSrv_ArgNoGiveSize"
+    RWSSRV_ARGNOWPOBJ                   "RwsSrv_ArgNoWPObj"
+    RWSSRV_WPALLOCFAILED                "RwsSrv_WpAllocFailed"
+    RWSSRV_SOMALLOCFAILED               "RwsSrv_SomAllocFailed"
+    RWSSRV_ARGBADGIVEQ                  "RwsSrv_ArgBadGiveQ"
+    RWSSRV_ARGBADGIVECONV               "RwsSrv_ArgBadGiveConv"
+    RWSSRV_ARGGIVECONVFAILED            "RwsSrv_ArgGiveConvFailed"
+    RWSSRV_ARGBADGIVE                   "RwsSrv_ArgBadGive"
+    RWSSRV_ARGNULLPTR                   "RwsSrv_ArgNullPtr"
+    RWSSRV_ARGBADGET                    "RwsSrv_ArgBadGet"
+    RWSSRV_FUNCTIONFAILED               "RwsSrv_FunctionFailed"
+    RWSSRV_RTNBADDSC                    "RwsSrv_RtnBadDsc"
+    RWSSRV_RTNCOPYICONFAILED            "RwsSrv_RtnCopyIconFailed"
+    RWSSRV_RTNBADGET                    "RwsSrv_RtnBadGet"
+    RWSSRV_OUTVALUEZERO                 "RwsSrv_OutValueZero"
+    RWSSRV_OUTCNTZERO                   "RwsSrv_OutCntZero"
+    RWSSRV_OUTBUFTOOSMALL               "RwsSrv_OutBufTooSmall"
+    RWSSRV_OUTBADGETCONV                "RwsSrv_OutBadGetConv"
+    RWSSRV_OUTGETCONVFAILED             "RwsSrv_OutGetConvFailed"
+    RWSSRV_CONVERTFAILED                "RwsSrv_ConvertFailed"
+    RWSSRV_SETHANDLER                   "RwsSrv_SetHandler"
+    RWSSRV_CMDFAILED                    "RwsSrv_CmdFailed"
+    RWSSRV_CMDBADARGCNT                 "RwsSrv_CmdBadArgCnt"
+    RWSSRV_CMDBADRTNTYPE                "RwsSrv_CmdBadRtnType"
+    RWSSRV_CMDBADARGTYPE                "RwsSrv_CmdBadArgType"
+    RWSSRV_CMDNOMENUWND                 "RwsSrv_CmdNoMenuWnd"
+    RWSSRV_CMDPOSTMSGFAILED             "RwsSrv_CmdPostMsgFailed"
+    RWSSRV_CMDNOTACMD                   "RwsSrv_CmdNotACmd"
+    RWSSRV_CMDBADCMD                    "RwsSrv_CmdBadCmd"
+    RWSSRV_CMDBADARG                    "RwsSrv_CmdBadArg"
+    RWSCLI_UNKNOWNERROR                 "RwsCli_UnknownError"
+    RWSCLI_NOATOM                       "RwsCli_NoAtom"
+    RWSCLI_NOCLIENTWND                  "RwsCli_NoClientWnd"
+    RWSCLI_DOSALLOCMEM                  "RwsCli_DosAllocMem"
+    RWSCLI_DOSSUBSETMEM                 "RwsCli_DosSubsetMem"
+    RWSCLI_OUTOFMEM                     "RwsCli_OutOfMem"
+    RWSCLI_BADMEMSIZE                   "RwsCli_BadMemSize"
+    RWSCLI_BADMEMPTR                    "RwsCli_BadMemPtr"
+    RWSCLI_BADDISPATCHARG               "RwsCli_BadDispatchArg"
+    RWSCLI_SERVERNOTFOUND               "RwsCli_ServerNotFound"
+    RWSCLI_NOTIMER                      "RwsCli_NoTimer"
+    RWSCLI_WINPOSTMSG                   "RwsCli_WinPostMsg"
+    RWSCLI_WM_QUIT                      "RwsCli_WM_QUIT"
+    RWSCLI_TIMEOUT                      "RwsCli_Timeout"
+    RWSCLI_MISSINGARGS                  "RwsCli_MissingArgs"
+    RWSCLI_SETPROC                      "RwsCli_SetProc"
+    RWSCLI_SETRTN                       "RwsCli_SetRtn"
+    RWSCLI_SETARG                       "RwsCli_SetArg"
+    RWSCLI_MEMINUSE                     "RwsCli_MemInUse"
+    RWSCLI_TERMINATEFAILED              "RwsCli_TerminateFailed"
+    RWSCLI_PROCBADGIVEQ                 "RwsCli_ProcBadGiveQ"
+    RWSCLI_PROCNOVALUE                  "RwsCli_ProcNoValue"
+    RWSCLI_PROCBADSIZE                  "RwsCli_ProcBadSize"
+    RWSCLI_PROCBADCMD                   "RwsCli_ProcBadCmd"
+    RWSCLI_PROCBADTYPE                  "RwsCli_ProcBadType"
+    RWSCLI_RTNBADGIVE                   "RwsCli_RtnBadGive"
+    RWSCLI_RTNBADGETQ                   "RwsCli_RtnBadGetQ"
+    RWSCLI_RTNBADSIZE                   "RwsCli_RtnBadSize"
+    RWSCLI_RTNBADGETCONV                "RwsCli_RtnBadGetConv"
+    RWSCLI_RTNBADGET                    "RwsCli_RtnBadGet"
+    RWSCLI_ARGBADGIVEQ                  "RwsCli_ArgBadGiveQ"
+    RWSCLI_ARGNOVALUE                   "RwsCli_ArgNoValue"
+    RWSCLI_ARGBADSIZE                   "RwsCli_ArgBadSize"
+    RWSCLI_ARGBADGIVECONV               "RwsCli_ArgBadGiveConv"
+    RWSCLI_ARGBADGIVE                   "RwsCli_ArgBadGive"
+    RWSCLI_ARGBADGETQ                   "RwsCli_ArgBadGetQ"
+    RWSCLI_ARGBADGETSIZE                "RwsCli_ArgBadGetSize"
+    RWSCLI_ARGBADGETCONV                "RwsCli_ArgBadGetConv"
+    RWSCLI_ARGBADGET                    "RwsCli_ArgBadGet"
+    RWSCLI_BADARGNDX                    "RwsCli_BadArgNdx"
+    RWSCLI_ERRMSGNOTFOUND               "RwsCli_ErrMsgNotFound"
+    RWSCLI_BADTIMEOUT                   "RwsCli_BadTimeout"
+    RWSCLI_RECURSIVECALL                "RwsCli_RecursiveCall"
+    RWSCLI_UNEXPECTEDMSG                "RwsCli_UnexpectedMsg"
+    RWSCLI_BADTID                       "RwsCli_BadTid"
+    RWSCLI_NOTINDISPATCH                "RwsCli_NotInDispatch"
+END
+
+/****************************************************************************/
+

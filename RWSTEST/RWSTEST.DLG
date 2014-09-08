@@ -1,0 +1,110 @@
+/****************************************************************************/
+/* RWS - beta version 0.80                                                  */
+/****************************************************************************/
+
+// RWSTEST.DLG
+// Remote Workplace Shell - demo program "RwsTest"
+
+/****************************************************************************/
+
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Remote Workplace Server - "RwsTest" demo program.
+ *
+ * The Initial Developer of the Original Code is Richard L. Walsh.
+ * 
+ * Portions created by the Initial Developer are Copyright (C) 2004, 2005
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+/****************************************************************************/
+
+#ifndef OS2_INCLUDED
+   #include <os2.h>
+#endif
+DLGINCLUDE 1 "RWSTEST.H"
+
+DLGTEMPLATE IDD_MAIN LOADONCALL MOVEABLE DISCARDABLE
+BEGIN
+    DIALOG  "RWS Test", IDD_MAIN, 64, 4, 380, 252, WS_VISIBLE,
+            FCF_SYSMENU | FCF_TITLEBAR | FCF_TASKLIST
+    BEGIN
+        LTEXT           "~Proc", -1, 4, 232, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_PROCTYPE, 40, 161, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_PROCNAME, 165, 232, 165, 8, ES_MARGIN
+        CONTROL         "", IDC_PROCXDS, 340, 202, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        CTEXT           "Type", -1, 80, 215, 32, 8
+        CTEXT           "Size", -1, 163, 215, 32, 8, NOT WS_GROUP
+        CTEXT           "Value", -1, 252, 215, 32, 8, NOT WS_GROUP
+        LTEXT           "Arg~1", -1, 4, 202, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_ARG1TYPE, 40, 132, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_ARG1SIZE, 165, 203, 28, 8, ES_MARGIN
+        ENTRYFIELD      "", IDC_ARG1DATA, 206, 203, 124, 8, ES_MARGIN
+        CONTROL         "", IDC_ARG1XDS, 340, 173, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        LTEXT           "Arg~2", -1, 4, 182, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_ARG2TYPE, 40, 112, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_ARG2SIZE, 165, 183, 28, 8, ES_MARGIN
+        ENTRYFIELD      "", IDC_ARG2DATA, 206, 183, 124, 8, ES_MARGIN
+        CONTROL         "", IDC_ARG2XDS, 340, 153, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        LTEXT           "Arg~3", -1, 4, 162, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_ARG3TYPE, 40, 92, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_ARG3SIZE, 165, 163, 28, 8, ES_MARGIN
+        ENTRYFIELD      "", IDC_ARG3DATA, 206, 163, 124, 8, ES_MARGIN
+        CONTROL         "", IDC_ARG3XDS, 340, 133, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        LTEXT           "Arg~4", -1, 4, 142, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_ARG4TYPE, 40, 72, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_ARG4SIZE, 165, 143, 28, 8, ES_MARGIN
+        ENTRYFIELD      "", IDC_ARG4DATA, 206, 143, 124, 8, ES_MARGIN
+        CONTROL         "", IDC_ARG4XDS, 340, 113, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        LTEXT           "Arg~5", -1, 4, 122, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_ARG5TYPE, 40, 52, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_ARG5SIZE, 165, 123, 28, 8, ES_MARGIN
+        ENTRYFIELD      "", IDC_ARG5DATA, 206, 123, 124, 8, ES_MARGIN
+        CONTROL         "", IDC_ARG5XDS, 340, 93, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        LTEXT           "Arg~6", -1, 4, 102, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_ARG6TYPE, 40, 32, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_ARG6SIZE, 165, 103, 28, 8, ES_MARGIN
+        ENTRYFIELD      "", IDC_ARG6DATA, 206, 103, 124, 8, ES_MARGIN
+        CONTROL         "", IDC_ARG6XDS, 340, 73, 32, 40, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        LTEXT           "Retur~n", -1, 4, 82, 32, 8, DT_MNEMONIC
+        CONTROL         "", IDC_RTNTYPE, 40, 12, 116, 80, WC_COMBOBOX, 
+                        CBS_DROPDOWNLIST | WS_TABSTOP | WS_VISIBLE
+        ENTRYFIELD      "", IDC_RTNSIZE, 165, 83, 28, 8, ES_MARGIN
+        LTEXT           "Result", -1, 4, 45, 32, 8, DT_MNEMONIC
+        MLE             "", IDC_RESULT, 40, 26, 332, 45, MLS_WORDWRAP | 
+                        MLS_VSCROLL | MLS_IGNORETAB
+        DEFPUSHBUTTON   "~Run", IDC_OK, 130, 4, 40, 14, BS_NOPOINTERFOCUS | 
+                        WS_GROUP
+        PUSHBUTTON      "~Clear", IDC_CLEAR, 210, 4, 40, 14, 
+                        BS_NOPOINTERFOCUS
+    END
+END
+

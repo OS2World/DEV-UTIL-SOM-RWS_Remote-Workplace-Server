@@ -1,0 +1,161 @@
+_______________________________________________________________________________
+
+== ICONOMIZE ==
+_______________________________________________________________________________
+
+   Beta version 0.80 released July 3, 2007
+
+   (C)Copyright 2004  R.L.Walsh - all rights reserved
+
+   An open-source project licensed under the Mozilla Public License
+
+   Please send your comments & questions to:  Rich Walsh <rws@e-vertise.com>
+
+_______________________________________________________________________________
+
+ - About Iconomize -
+_______________________________________________________________________________
+
+Iconomize is a unique ini-maintenance tool that lets you eliminate the single
+largest source of bloat in os2.ini:  duplicate icon data.  Running Iconomize
+just once can reduce the size of your os2.ini anywhere from 10% to 25%.
+
+One of the nicest features of the WPS is the ease with which you can assign
+a customized icon to an object.  For program objects and the like, that icon
+is stored in os2.ini.  Unfortunately, many of these "custom" icons are totally
+unnecessary because they're exact copies the object's default icon.  Each one
+of these duplicated icons adds 4-12K of useless bloat to os2.ini.  Iconomize
+lets you delete the duplicates and reduce the bloat.
+
+Iconomize was created to demonstrate the features of Remote Workplace Server
+("RWS").  RWS enables stand-alone programs to interact with the WPS as though
+they were part of it.  Programs can manipulate WPS objects in ways that were
+not available previously:  query their titles, paths, icons, etc.; popup their
+menus; and more.  RWS is an open-source project.  Contributions of code from
+developers and suggestions from users is encouraged. To foster widespread use,
+RWS is licensed under the generous terms of the Mozilla Public License.
+
+_______________________________________________________________________________
+
+ - Installing Iconomize -
+_______________________________________________________________________________
+
+Both Iconomize v0.80 and its companion utility, FPos v0.80, require access
+to the dlls rwssrv08 and rwscli08.  Other programs may require these as well.
+You have two choices:
+
+- put Iconomize.exe, the two dlls, and FPos.exe (if you have it) in the same
+  directory
+- put the two dlls in a directory that's on your LIBPATH, & put Iconomize.exe
+  (and FPos.exe) wherever you wish
+
+The first time you run Iconomize, it will register the "RWS08" WPS class. This
+class, contained in RwsSrv08.Dll, hosts the server portion of Remote Workplace
+Server.  It creates no permanent objects and will only be loaded by the WPS
+when you run a program that uses RWS.
+
+Note:  Each version of RWS operates independently and will never conflict
+with earlier or later versions.  You can run programs that require different
+versions of the RWS dlls simultaneously without any compatibility problems.
+
+_______________________________________________________________________________
+
+ - Using Iconomize -
+_______________________________________________________________________________
+
+When Iconomize loads, it has to "wake up" every WPS object that has an entry
+in PM_Abstract:Icons.  This may take several seconds.  For every entry, the
+display will identify the object's:  custom icon, default icon, and title.
+It will also show the icon's size, the entry's key in os2.ini, & the object's
+fully-qualified path.
+
+Initially, the list is sorted by title.  You can click on the heading for any
+column that contains text to sort the list in ascending order based on that
+column.  Clicking on the heading again will resort it in descending order.
+Clicking on the "Custom" column sorts the list by status (i.e. deleted/not
+deleted).  If you want to reverse the ascending/descending indicators, you
+can do so from the Options->Sort Indicators menu.
+
+To delete items, doubleclick on them, or press Delete or Enter, or click
+MB2 and select Delete or Undelete from the popup menu.  Items will be marked
+with cross-hatching in the "Custom" column.  Icons will not be deleted from
+os2.ini until you close Iconomzie or select one of the options on the File
+menu.  You will then be asked to confirm that you want to delete them.
+
+Right-clicking on a group of selected items presents a limited menu that
+lets you delete or undelete all of them.  Right-clicking on a single item
+provides a more versatile menu.  You can:  save the custom icon to file,
+open the object, locate the object (i.e. open the folder containing it),
+or popup the object's WPS menu.
+
+When you close Iconomize's main window or any of its popup windows, it will
+save the window's size, position, colors and fonts.  Closing Iconomize will
+also save the current sort order and any settings you've changed.  To reset
+everything to its original values, select 'Restore defaults' on the Options
+menu, then restart Iconomize.
+
+!Important!  After you reset an object's icon, it may not display the correct
+icon when you open the folder containing it.  The object's Properties notebook
+will show the correct icon;  after you restart the WPS, the folder will too.
+
+_______________________________________________________________________________
+_______________________________________________________________________________
+
+Even after you've eliminated all of the duplicate icons, you may feel that
+there are still too many icons stored in os2.ini.  Of course, you can simply
+delete the icons for objects you don't use very often - but there may be a
+better way.
+
+If an .exe doesn't have its own icon, the system looks for an icon file with
+the same name.  For example, if xyz.exe lacks an icon, the WPS will look for
+xyz.ico and use that icon.  Program objects for xyz will not be listed by
+Iconomize because xyz's icon is not stored in os2.ini.
+
+When you find an object that has an assigned icon, you can use the 'Save Icon'
+option to create an .ico file that matches the .exe.  Unfortunately, Iconomize
+can't determine the correct name and location for the icon, so it offers to
+create a file in the same folder as the program object.  You can either update
+the name and directory in the Save As dialog or use the defaults and perform
+a copy/rename later.
+
+Hint:  if you have the program object's Properties notebook open when you do
+this, you can copy the exe's name and path to the file dialog;  then, all you
+have to do is change the file extension from .exe to .ico).
+
+Once that's done, you can use Iconomize to reset the program object to its
+default.  The program object will still show the same icon as before, only
+now the icon will come from the .ico file and not os2.ini.
+
+A note of caution:  be sure the program object in question refers to xyz.exe
+and not cmd.exe or a .cmd file.  This trick will not work if it does.
+
+_______________________________________________________________________________
+
+ - Acknowledgements -
+_______________________________________________________________________________
+
+My thanks go to Klaus Staedtler for providing an improved version of the
+original Iconomize icon.
+
+_______________________________________________________________________________
+
+ - File List -
+_______________________________________________________________________________
+
+All files are timestamped July 3, 2007 at 00:08:00.
+
+1.  Iconomize.Exe
+2.  Iconomize.Txt
+3.  RwsSrv08.Dll
+4.  RwsCli08.Dll
+5.  Rws08.Cmd
+6.  LICENSE
+
+_______________________________________________________________________________
+
+Rich Walsh  <rws@e-vertise.com>
+Ft Myers, FL
+
+July 3, 2007
+_______________________________________________________________________________
+

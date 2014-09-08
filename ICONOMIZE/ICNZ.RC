@@ -1,0 +1,99 @@
+/****************************************************************************/
+/* RWS - beta version 0.80                                                  */
+/****************************************************************************/
+
+// ICNZ.RC
+// Remote Workplace Server - demo program "Iconomize"
+
+/****************************************************************************/
+
+/* ***** BEGIN LICENSE BLOCK *****
+ * Version: MPL 1.1
+ *
+ * The contents of this file are subject to the Mozilla Public License Version
+ * 1.1 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+ * for the specific language governing rights and limitations under the
+ * License.
+ *
+ * The Original Code is Remote Workplace Server - "Iconomize" demo program.
+ *
+ * The Initial Developer of the Original Code is Richard L. Walsh.
+ * 
+ * Portions created by the Initial Developer are Copyright (C) 2004
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Contributor(s):
+ *  Klaus Staedtler - enhancements to the original Iconomize icon
+ *
+ *
+ * ***** END LICENSE BLOCK ***** */
+
+/****************************************************************************/
+
+#include "ICNZRC.H"
+
+RCINCLUDE   "ICNZ.DLG"
+
+ICON        IDI_APPICO      "ICNZ.ICO"
+ICON        IDI_ERRICO      "ICNZERR.ICO"
+POINTER     IDI_SORTPTR     "ICNZSORT.PTR"
+BITMAP      IDB_UPBMP       "ICNZUP.BMP"
+BITMAP      IDB_DOWNBMP     "ICNZDOWN.BMP"
+
+MENU    IDM_SINGLE
+  BEGIN
+    MENUITEM    "Sor~t",            IDM_SORT
+    MENUITEM SEPARATOR
+    MENUITEM    "~Open",            IDM_OPEN
+    MENUITEM    "~Locate",          IDM_LOCATE
+    MENUITEM    "~Show menu",       IDM_MENU
+    MENUITEM    "Save ~icon",       IDM_SAVEICON
+    MENUITEM SEPARATOR
+    MENUITEM    "~Delete",          IDM_DELETE
+  END
+
+MENU    IDM_MULTIPLE
+  BEGIN
+    MENUITEM    "Sor~t",            IDM_SORT
+    MENUITEM SEPARATOR
+    MENUITEM    "~Undelete",        IDM_UNDELETEALL
+    MENUITEM    "~Delete",          IDM_DELETEALL
+  END
+
+MENU    IDM_MAIN
+  BEGIN
+    SUBMENU     "~File",            IDM_FILE
+      BEGIN
+        MENUITEM    "~Reload",      IDM_GETDATA
+        MENUITEM    "~Save now",    IDM_SAVE
+        MENUITEM    "~Exit",        SC_CLOSE,       MIS_SYSCOMMAND
+      END
+    SUBMENU     "~Sort",            IDM_SORT
+      BEGIN
+        MENUITEM    "~Deleted",     IDM_SORTCUST,   0, MIA_NODISMISS
+        MENUITEM    "~Title",       IDM_SORTTITLE,  0, MIA_NODISMISS
+        MENUITEM    "~Size",        IDM_SORTSIZE,   0, MIA_NODISMISS
+        MENUITEM    "~Key",         IDM_SORTKEY,    0, MIA_NODISMISS
+        MENUITEM    "~Path",        IDM_SORTPATH,   0, MIA_NODISMISS
+        MENUITEM SEPARATOR
+        MENUITEM    "Don~e",        IDM_SORTDONE
+      END
+    SUBMENU     "~Options",         IDM_OPTIONS
+      BEGIN
+        SUBMENU     "~Sort Indicators", IDM_SORTSYM
+        BEGIN
+          MENUITEM    "    ",     IDM_INTUITIVE
+          MENUITEM    "    ",     IDM_LITERAL
+      END
+        MENUITEM    "~Reset Columns",   IDM_RESETCOL
+        MENUITEM    "Restore ~Defaults",IDM_RESTOREDEF
+      END
+  END
+
+/****************************************************************************/
+
